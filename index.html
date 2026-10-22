@@ -3,126 +3,96 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lula × Flávio — Brazil 2026 runoff tracker</title>
-<meta name="description" content="Polls, Plano Político's model and Polymarket for Brazil's 2026 presidential runoff, updated daily.">
-<meta property="og:title" content="Lula × Flávio — Brazil 2026 runoff tracker">
-<meta property="og:description" content="Poll average, election model and prediction market, side by side. Updated daily.">
+<title>Brazil Presidential Election Tracker 2026</title>
+<meta name="description" content="Polls, Plano Político's model and Polymarket for Brazil's 2026 presidential runoff.">
+<meta property="og:title" content="Brazil Presidential Election Tracker 2026">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%228%22 height=%2216%22 fill=%22%23c8202f%22/%3E%3Crect x=%228%22 width=%228%22 height=%2216%22 fill=%22%231f5fb4%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 :root{
   --bg:#f6f7f5; --panel:#fcfcfb; --fg:#1b1f1d; --muted:#5f6763; --faint:#8a928e; --rule:#e3e6e3; --hi:#eef1ee;
-  --lula:#c8202f; --flavio:#1f5fb4; --market:#b87800;
+  --lula:#c8202f; --flavio:#1f5fb4;
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"Source Sans 3",system-ui,-apple-system,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root{
   --bg:#121514; --panel:#1a1a19; --fg:#e8ece9; --muted:#9aa49f; --faint:#6f7873; --rule:#2a2f2c; --hi:#222826;
-  --lula:#d23a44; --flavio:#4a8af0; --market:#bf8a1a; color-scheme:dark}}
+  --lula:#d23a44; --flavio:#4a8af0; color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
-.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h1{font-family:var(--f-display);font-weight:700;font-size:clamp(32px,5.5vw,48px);line-height:1;margin:6px 0 0;letter-spacing:.005em}
-h1 .l{color:var(--lula)} h1 .f{color:var(--flavio)} h1 .x{color:var(--faint);font-weight:500}
-h2{font-family:var(--f-display);font-weight:600;font-size:21px;margin:0;letter-spacing:.01em}
-.sub{color:var(--muted);margin:8px 0 0;max-width:720px}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin:24px 0 18px}
-.tile{background:var(--panel);padding:14px 16px}
-.tile .k{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
-.tile .v{font-family:var(--f-display);font-weight:600;font-size:34px;line-height:1.05;margin-top:4px;font-variant-numeric:tabular-nums}
-.tile .v small{font-size:17px;color:var(--muted);font-weight:500}
-.tile .s{font-size:13px;color:var(--muted)}
-.sw{display:inline-block;width:14px;height:0;border-top:2px solid currentColor;vertical-align:middle}
-.sw.dot{width:8px;height:8px;border:0;border-radius:50%;background:currentColor}
-.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:4px 0 14px}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration-color:var(--faint);text-underline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(30px,5vw,44px);line-height:1;margin:0}
+h2{font-family:var(--f-display);font-weight:600;font-size:21px;margin:0}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:18px}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--panel)}
 .seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--muted);padding:5px 12px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--rule)}
 .seg button[aria-pressed=true]{background:var(--hi);color:var(--fg);font-weight:600}
-.ctl-lbl{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin-right:6px}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 8px;position:relative;min-width:0}
-.card .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:6px 0 2px}
+.card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 10px;position:relative;min-width:0}
+.card .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.big{display:flex;gap:22px;margin:10px 0 4px;font-family:var(--f-display);font-weight:600;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.big small{font-size:15px;color:var(--muted);font-weight:500;margin-left:2px}
+.big .l{color:var(--lula)} .big .f{color:var(--flavio)} .big .n{color:var(--fg)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:6px 0 0}
 .legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:14px;border-top:2px solid var(--muted)}
+.sw.thin{border-top-width:1px}
+.sw.band{height:8px;border:0;background:var(--muted);opacity:.3;border-radius:2px}
 svg.chart{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
-.grid line{stroke:var(--rule);stroke-width:1}
+.grid line{stroke:var(--rule)}
 .axis text{fill:var(--faint);font-family:var(--f-mono);font-size:10.5px}
-.marker line{stroke:var(--faint);stroke-width:1}
+.marker line{stroke:var(--faint)}
 .marker text{fill:var(--muted);font-family:var(--f-mono);font-size:10px}
-.pre-shade{fill:var(--hi);opacity:.6}
 .endlbl{font-family:var(--f-mono);font-size:11px;fill:var(--fg)}
-.cross{stroke:var(--muted);stroke-width:1;pointer-events:none}
-.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 18px rgba(0,0,0,.08);min-width:170px;display:none;z-index:2}
+.cross{stroke:var(--muted);pointer-events:none}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 18px rgba(0,0,0,.08);min-width:160px;display:none;z-index:2}
 .tip .d{font-family:var(--f-mono);font-size:10.5px;color:var(--muted);margin-bottom:3px}
-.tip .r{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
-.tip .r b{font-weight:600}
+.tip .r{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
 .tip .pl{color:var(--muted);font-size:11.5px;margin-top:4px;border-top:1px solid var(--rule);padding-top:4px}
-.note{font-size:12px;color:var(--faint);margin:4px 0 6px}
-table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.tbl{margin-top:28px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums;margin-top:10px;white-space:nowrap}
 th{font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule)}
 td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:right}
-th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
-a{color:inherit;text-decoration-color:var(--faint);text-underline-offset:2px}
-td a{color:inherit;text-decoration-color:var(--rule);text-underline-offset:2px}
-.bar{display:inline-block;width:70px;height:6px;border-radius:3px;background:var(--lula);position:relative;vertical-align:middle;margin-left:6px}
-.bar i{position:absolute;right:0;top:0;bottom:0;background:var(--flavio);border-radius:0 3px 3px 0;border-left:2px solid var(--panel)}
-.section{margin-top:28px}
-details summary{cursor:pointer;color:var(--muted);font-size:13.5px;margin-top:10px}
-.method{color:var(--muted);font-size:13.5px;max-width:820px}
-.method b{color:var(--fg);font-weight:600}
-.err{background:var(--hi);border-radius:8px;padding:12px;color:var(--lula)}
-@media (max-width:860px){.charts{grid-template-columns:1fr}.tiles{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:520px){.tile .v{font-size:28px}.hide-sm{display:none}}
+th.t,td.t{text-align:left}
+td.reg{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.foot{margin-top:20px;font-size:12px;color:var(--faint)}
+.err{color:var(--lula)}
+@media (max-width:860px){.charts{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow" id="eyebrow">Brazil 2026 · Presidential runoff · Oct 25</div>
-  <h1><span class="l">Lula</span> <span class="x">×</span> <span class="f">Flávio Bolsonaro</span></h1>
-  <p class="sub">The poll average, an election model, and the betting market, side by side. Polls show the two-way vote share. The model and the market show the chance of winning.</p>
-
-  <div class="tiles" id="tiles"></div>
-
-  <div class="controls">
-    <div><span class="ctl-lbl">Range</span><span class="seg" data-ctl="range"><button data-v="runoff">Runoff</button><button data-v="all">Since April</button></span></div>
-    <div><span class="ctl-lbl">Poll average</span><span class="seg" data-ctl="avg"><button data-v="ours">Ours</button><button data-v="pp">Plano Político</button><button data-v="both">Both</button></span></div>
-    <div><span class="ctl-lbl">Chance for</span><span class="seg" data-ctl="cand"><button data-v="flavio">Flávio</button><button data-v="lula">Lula</button></span></div>
+  <div class="top">
+    <h1>Brazil Presidential Election Tracker 2026</h1>
+    <span class="seg" data-ctl="range"><button data-v="runoff">Runoff</button><button data-v="all">Since April</button></span>
   </div>
 
   <div class="charts">
-    <div class="card" id="c-polls">
-      <div class="hd"><h2>Polls · two-way vote share</h2></div>
-      <div class="legend" id="lg-polls"></div>
-      <svg class="chart" id="svg-polls" role="img" aria-label="Poll average chart"></svg>
+    <div class="card">
+      <div class="hd"><h2>Polls</h2><span class="seg" data-ctl="avg"><button data-v="ours">Our average</button><button data-v="pp">Plano Político</button></span></div>
+      <div class="big" id="big-polls"></div>
+      <svg class="chart" id="svg-polls" role="img" aria-label="Poll average, two-way vote share"></svg>
       <div class="tip" id="tip-polls"></div>
-      <div class="note" id="note-polls"></div>
     </div>
-    <div class="card" id="c-prob">
-      <div class="hd"><h2 id="prob-title">Chance of winning</h2></div>
-      <div class="legend" id="lg-prob"></div>
-      <svg class="chart" id="svg-prob" role="img" aria-label="Win probability chart"></svg>
+    <div class="card">
+      <div class="hd"><h2>Chance of winning</h2></div>
+      <div class="big" id="big-prob"></div>
+      <div class="legend"><span><span class="sw"></span>Plano Político model</span><span><span class="sw thin"></span>Polymarket</span><span><span class="sw band"></span>Range</span></div>
+      <svg class="chart" id="svg-prob" role="img" aria-label="Chance of winning, model and Polymarket"></svg>
       <div class="tip" id="tip-prob"></div>
-      <div class="note" id="note-prob"></div>
     </div>
   </div>
 
-  <div class="section">
+  <div class="tbl">
     <h2>Runoff polls</h2>
-    <p class="note">National polls fielded after the first round, newest first. The share column is Flávio's share of the two-way vote. Source: <a href="https://planopolitico.com.br/agregador/">Plano Político</a>, which links each poll and its TSE registration.</p>
     <table id="tbl"></table>
-    <details><summary>Pre-first-round hypothetical Lula × Flávio polls</summary><table id="tbl-pre"></table></details>
   </div>
 
-  <div class="section method">
-    <h2>How this works</h2>
-    <p><b>Our poll average</b> has no smoothing and no house effects. On each day, take each pollster's latest poll fielded in the previous 14 days (30 days before the first round, when polls were sparser), compute Flávio's two-way share, flávio ÷ (lula + flávio), and average them equally. It needs at least three pollsters. Weekly trackers count once. The series restarts after the first round on Oct 4, because earlier polls were hypothetical matchups.</p>
-    <p><b>Plano Político's average</b> is their national-only aggregate in valid votes, which uses their own weighting. <b>The model</b> is <a href="https://planopolitico.com.br/modelos-eleitorais/presidencial/">Plano Político's presidential model</a>. Before Oct 4 its numbers include the chance of winning outright in the first round and other runoff pairings, so Lula and Flávio don't add up to 100% there. Days before Aug 15 are their reconstruction. <b>The market</b> is the daily price of the "Yes" share on <a href="https://polymarket.com/event/brazil-presidential-election">Polymarket's Brazil presidential election</a> market.</p>
-    <p id="updated"></p>
-  </div>
+  <p class="foot" id="foot"></p>
 </div>
 
 <script>
@@ -134,222 +104,184 @@ try {
   if (!r.ok) throw new Error('HTTP ' + r.status);
   D = await r.json();
 } catch (e) {
-  $('#tiles').outerHTML = `<p class="err">Couldn't load data/data.json (${e.message}).</p>`;
+  $('.charts').outerHTML = `<p class="err">Couldn't load data (${e.message}).</p>`;
   return;
 }
 
-const state = {range:'runoff', avg:'ours', cand:'flavio'};
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const state = {range:'runoff', avg:'ours'};
 const day = s => Date.parse(s + 'T12:00:00Z');
 const fmtD = s => new Date(day(s)).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
 const pct = (v,d=1) => v==null ? '–' : v.toFixed(d);
 const last = a => a[a.length-1];
-const NAME = {flavio:'Flávio', lula:'Lula'};
-const runoffPolls = D.polls.filter(p => p.phase==='runoff');
-
-// ---- header + tiles
-const daysLeft = Math.round((day(D.runoff) - day(new Date().toISOString().slice(0,10)))/864e5);
-$('#eyebrow').textContent = `Brazil 2026 · Presidential runoff · Oct 25` + (daysLeft>0 ? ` · ${daysLeft} day${daysLeft>1?'s':''} out` : daysLeft===0 ? ' · Election day' : '');
-const ao = last(D.avg_ours), ap = last(D.avg_pp), m = last(D.model), k = last(D.market);
-const tile = (key, sw, v, s) => `<div class="tile"><div class="k">${sw}${key}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
-const lead = (f) => f>=50 ? `<span style="color:var(--flavio)">Flávio</span> ${pct(f)}<small>%</small>` : `<span style="color:var(--lula)">Lula</span> ${pct(100-f)}<small>%</small>`;
-$('#tiles').innerHTML =
-  tile('Our poll average', '', lead(ao.flavio), `two-way · ${ao.houses} pollsters · ${fmtD(ao.d)}`) +
-  tile('Plano Político average', '', lead(ap.flavio), `valid votes · ${fmtD(ap.d)}`) +
-  tile('Model chance', `<span class="sw" style="color:var(--flavio)"></span>`, `${NAME[m.flavio>=50?'flavio':'lula']} ${Math.round(Math.max(m.flavio,m.lula))}<small>%</small>`, `Plano Político · ${fmtD(m.d)}`) +
-  tile('Polymarket', `<span class="sw" style="color:var(--market)"></span>`, `${NAME[k.flavio>=50?'flavio':'lula']} ${Math.round(Math.max(k.flavio,k.lula))}<small>%</small>`, `market price · ${fmtD(k.d)}`);
+const MODE = {Presencial:'In person', Telefone:'Phone', Internet:'Online', Misto:'Mixed'};
 
 // ---- svg helpers
 const NS = 'http://www.w3.org/2000/svg';
 function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const a in attrs) e.setAttribute(a,attrs[a]); if(parent) parent.appendChild(e); return e; }
-function linePath(pts, x, y){
-  let d='', pen=false, prev=null;
+function segments(pts){
+  // split on the first-round regime change and on gaps > 3 days
+  const out=[]; let cur=[];
   for (const p of pts){
-    if (p==null || p.v==null){ pen=false; continue; }
-    // break the line across the first-round regime change or gaps > 3 days
-    if (pen && (p.brk || (prev && day(p.d)-day(prev.d) > 3*864e5))) pen=false;
-    d += (pen?'L':'M') + x(day(p.d)).toFixed(1) + ',' + y(p.v).toFixed(1);
-    pen=true; prev=p;
+    if (p.v==null){ if(cur.length) out.push(cur); cur=[]; continue; }
+    const prev = cur[cur.length-1];
+    if (prev && (p.brk || day(p.d)-day(prev.d) > 3*864e5)){ out.push(cur); cur=[]; }
+    cur.push(p);
   }
-  return d;
+  if (cur.length) out.push(cur);
+  return out;
 }
+const linePath = (pts,x,y) => segments(pts).map(s=>s.map((p,i)=>(i?'L':'M')+x(day(p.d)).toFixed(1)+','+y(p.v).toFixed(1)).join('')).join('');
 
-let W = 560, H = 330; const M = {t:14, r:74, b:26, l:34};
-function size(svg){ W = Math.max(300, Math.round(svg.parentElement.clientWidth - 32)); H = Math.round(Math.min(340, Math.max(250, W*0.62))); }
-function frame(svg, x0, x1, y0, y1, yticks, yfmt){
+let W = 560, H = 330; const M = {t:14, r:84, b:26, l:34};
+function size(svg){ W = Math.max(300, Math.round(svg.parentElement.clientWidth - 32)); H = Math.round(Math.min(340, Math.max(240, W*0.6))); }
+function xDomain(){
+  const today = day(new Date().toISOString().slice(0,10));
+  const x1 = Math.max(day(D.runoff), today) + 864e5*0.5;
+  const x0 = state.range==='runoff' ? day(D.round1) - 864e5*0.5 : day(D.start);
+  return [x0, x1];
+}
+function frame(svg, y0, y1, yticks){
   svg.innerHTML=''; svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const [x0,x1] = xDomain();
   const x = t => M.l + (t-x0)/(x1-x0)*(W-M.l-M.r);
   const y = v => M.t + (1-(v-y0)/(y1-y0))*(H-M.t-M.b);
   const g = el('g',{class:'grid'},svg), ax = el('g',{class:'axis'},svg);
-  for (const v of yticks){ el('line',{x1:M.l,x2:W-M.r,y1:y(v),y2:y(v)},g); el('text',{x:M.l-6,y:y(v)+3.5,'text-anchor':'end'},ax).textContent=yfmt(v); }
-  // x ticks: weekly in runoff view, monthly otherwise
+  for (const v of yticks){ el('line',{x1:M.l,x2:W-M.r,y1:y(v),y2:y(v)},g); el('text',{x:M.l-6,y:y(v)+3.5,'text-anchor':'end'},ax).textContent=v+'%'; }
   const span = (x1-x0)/864e5, ticks=[];
-  if (span < 40){ for(let t=x0; t<=x1; t+=864e5){ const d=new Date(t); if(d.getUTCDay()===1) ticks.push(t);} }
+  if (span < 40){ for(let t=x0+864e5*0.5; t<=x1; t+=864e5) if(new Date(t).getUTCDay()===1) ticks.push(t); }
   else { const d=new Date(x0); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth()+1); for(;d.getTime()<=x1;d.setUTCMonth(d.getUTCMonth()+1)) ticks.push(d.getTime()); }
   for (const t of ticks) el('text',{x:x(t),y:H-8,'text-anchor':'middle'},ax).textContent = new Date(t).toLocaleDateString('en-US', span<40?{month:'short',day:'numeric',timeZone:'UTC'}:{month:'short',timeZone:'UTC'});
   el('line',{x1:M.l,x2:W-M.r,y1:H-M.b,y2:H-M.b,stroke:'var(--rule)'},svg);
+  // first round + runoff markers
+  const mk = el('g',{class:'marker'},svg), r1 = day(D.round1), ro = day(D.runoff), wide = span > 60;
+  if (r1 >= x0){ el('line',{x1:x(r1),x2:x(r1),y1:M.t,y2:H-M.b},mk); el('text',{x:x(r1)+(wide?-4:4),y:M.t+10,'text-anchor':wide?'end':'start'},mk).textContent='1st round'; }
+  el('line',{x1:x(ro),x2:x(ro),y1:M.t,y2:H-M.b},mk);
+  el('text',{x:x(ro)+(wide?4:-4),y:wide?H-M.b-6:M.t+10,'text-anchor':wide?'start':'end'},mk).textContent='Runoff';
+  el('line',{x1:M.l,x2:W-M.r,y1:y(50),y2:y(50),stroke:'var(--faint)'},svg);
   return {x,y};
 }
-function markers(svg, x, x0, x1, showPre){
-  const g = el('g',{class:'marker'},svg);
-  const r1 = day(D.round1), ro = day(D.runoff);
-  if (showPre && r1 > x0){
-    el('rect',{class:'pre-shade',x:M.l,y:M.t,width:x(r1)-M.l,height:H-M.t-M.b},svg.firstChild ? svg.insertBefore(document.createElementNS(NS,'g'),svg.firstChild) : svg);
-  }
-  if (r1 >= x0 && r1 <= x1){ const wide = x1-x0 > 60*864e5; el('line',{x1:x(r1),x2:x(r1),y1:M.t,y2:H-M.b},g); el('text',{x:x(r1)+(wide?-4:4),y:M.t+10,'text-anchor':wide?'end':'start'},g).textContent='1st round'; }
-  if (ro <= x1){ el('line',{x1:x(ro),x2:x(ro),y1:M.t,y2:H-M.b},g); const close = x(ro)-x(r1) < 60; el('text',{x:x(ro)+(close?4:-4),y:close?H-M.b-6:M.t+10,'text-anchor':close?'start':'end'},g).textContent='Runoff'; }
-}
-// direct end labels, nudged apart so they never collide
 function endLabels(svg, items, y){
   items = items.filter(i=>i.v!=null).map(i=>({...i, yy:y(i.v)})).sort((a,b)=>a.yy-b.yy);
   for (let i=1;i<items.length;i++) if (items[i].yy - items[i-1].yy < 13) items[i].yy = items[i-1].yy + 13;
-  for (const i of items){
-    el('text',{class:'endlbl',x:W-M.r+6,y:i.yy+4},svg).textContent = i.text;
-  }
+  for (const i of items) el('text',{class:'endlbl',x:W-M.r+6,y:i.yy+4},svg).textContent = i.text;
 }
 
-function xDomain(){
-  const today = Date.parse(new Date().toISOString().slice(0,10)+'T12:00:00Z');
-  const x1 = Math.max(day(D.runoff), today) + 864e5*0.5;
-  const x0 = state.range==='runoff' ? day('2026-10-04') - 864e5*0.5 : day(D.start);
-  return [x0, x1];
-}
-
-// ---- hover: one crosshair date shared by both charts
+// ---- hover: one date shared by both charts
 const charts = {};
-function hover(dateMs){
-  for (const id in charts) charts[id].show(dateMs);
-}
-function attachHover(id, svg, scales, tipEl, rowsFor){
+const hover = ms => { for (const id in charts) charts[id](ms); };
+function attachHover(id, svg, sc, tip, rowsFor){
   const cross = el('line',{class:'cross',y1:M.t,y2:H-M.b,visibility:'hidden'},svg);
   const dots = el('g',{},svg);
   const hit = el('rect',{x:M.l,y:0,width:W-M.l-M.r,height:H,fill:'transparent'},svg);
   const toDate = evt => {
-    const pt = svg.createSVGPoint(); const t = evt.touches ? evt.touches[0] : evt;
+    const t = evt.touches ? evt.touches[0] : evt, pt = svg.createSVGPoint();
     pt.x=t.clientX; pt.y=t.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
     const [x0,x1]=xDomain(); const ms = x0 + (p.x-M.l)/(W-M.l-M.r)*(x1-x0);
-    return Math.round((ms - day('2026-01-01'))/864e5)*864e5 + day('2026-01-01');
+    return Math.round((ms-day('2026-01-01'))/864e5)*864e5 + day('2026-01-01');
   };
   hit.addEventListener('mousemove', e=>hover(toDate(e)));
   hit.addEventListener('touchmove', e=>hover(toDate(e)), {passive:true});
   hit.addEventListener('mouseleave', ()=>hover(null));
-  charts[id] = {show(ms){
+  charts[id] = ms => {
     dots.innerHTML='';
-    if (ms==null){ cross.setAttribute('visibility','hidden'); tipEl.style.display='none'; return; }
-    const [x0,x1]=xDomain(); if (ms<x0||ms>x1){ cross.setAttribute('visibility','hidden'); tipEl.style.display='none'; return; }
-    const d = new Date(ms).toISOString().slice(0,10);
-    const {rows, extra, pts} = rowsFor(d);
-    if (!rows.length && !extra){ cross.setAttribute('visibility','hidden'); tipEl.style.display='none'; return; }
-    const X = scales.x(ms);
+    const hide = () => { cross.setAttribute('visibility','hidden'); tip.style.display='none'; };
+    const [x0,x1]=xDomain();
+    if (ms==null || ms<x0 || ms>x1) return hide();
+    const d = new Date(ms).toISOString().slice(0,10), {rows, extra=''} = rowsFor(d);
+    if (!rows.length) return hide();
+    const X = sc.x(ms);
     cross.setAttribute('x1',X); cross.setAttribute('x2',X); cross.setAttribute('visibility','visible');
-    for (const p of pts) el('circle',{cx:X,cy:scales.y(p.v),r:4,fill:p.c,stroke:'var(--panel)','stroke-width':2},dots);
-    tipEl.innerHTML = `<div class="d">${fmtD(d)}</div>` + rows.map(r=>`<div class="r"><span><span class="sw${r.dot?' dot':''}" style="color:${r.c}"></span> ${r.k}</span><b>${r.v}</b></div>`).join('') + (extra||'');
-    tipEl.style.display='block';
+    for (const r of rows) if (r.dot!=null) el('circle',{cx:X,cy:sc.y(r.dot),r:4,fill:r.c,stroke:'var(--panel)','stroke-width':2},dots);
+    tip.innerHTML = `<div class="d">${fmtD(d)}</div>` + rows.map(r=>`<div class="r"><span style="color:${r.c}">${r.k}</span><b>${r.v}</b></div>`).join('') + extra;
+    tip.style.display='block';
     const box = svg.getBoundingClientRect(), card = svg.parentElement.getBoundingClientRect();
-    const px = box.left - card.left + X/W*box.width;
-    const tw = tipEl.offsetWidth;
-    tipEl.style.left = (px + 14 + tw > card.width ? px - 14 - tw : px + 14) + 'px';
-    tipEl.style.top = (box.top - card.top + 20) + 'px';
-  }};
+    const px = box.left - card.left + X/W*box.width, tw = tip.offsetWidth;
+    tip.style.left = (px + 14 + tw > card.width ? px - 14 - tw : px + 14) + 'px';
+    tip.style.top = (box.top - card.top + 20) + 'px';
+  };
 }
 
-// ---- polls chart
+// ---- polls
 function drawPolls(){
   const svg = $('#svg-polls'); size(svg);
   const [x0,x1] = xDomain();
-  const inRange = p => day(p.end) >= x0 && day(p.end) <= x1;
-  const polls = D.polls.filter(inRange);
-  const vals = polls.map(p=>p.two_way);
-  const lo = Math.min(46, ...vals.map(v=>Math.min(v,100-v))), hi = Math.max(54, ...vals.map(v=>Math.max(v,100-v)));
-  const y0 = Math.floor(lo/2)*2, y1 = Math.ceil(hi/2)*2;
-  const ticks=[]; for(let v=y0; v<=y1; v+= (y1-y0>16?4:2)) ticks.push(v);
-  const {x,y} = frame(svg, x0, x1, y0, y1, ticks, v=>v+'%');
-  markers(svg, x, x0, x1, true);
-  el('line',{x1:M.l,x2:W-M.r,y1:y(50),y2:y(50),stroke:'var(--faint)','stroke-width':1},svg);
-  // dots: each poll twice (Flávio share, Lula share), small and translucent
+  const polls = D.polls.filter(p => day(p.end) >= x0 && day(p.end) <= x1);
+  const ext = polls.flatMap(p=>[p.two_way, 100-p.two_way]);
+  const y0 = Math.floor(Math.min(46,...ext)/2)*2, y1 = Math.ceil(Math.max(54,...ext)/2)*2;
+  const ticks=[]; for(let v=y0; v<=y1; v+=(y1-y0>16?4:2)) ticks.push(v);
+  const {x,y} = frame(svg, y0, y1, ticks);
   const g = el('g',{},svg);
   for (const p of polls){
-    const X = x(day(p.end));
-    el('circle',{cx:X,cy:y(p.two_way),r:3,fill:'var(--flavio)','fill-opacity':.35},g);
-    el('circle',{cx:X,cy:y(100-p.two_way),r:3,fill:'var(--lula)','fill-opacity':.35},g);
+    el('circle',{cx:x(day(p.end)),cy:y(p.two_way),r:3,fill:'var(--flavio)','fill-opacity':.35},g);
+    el('circle',{cx:x(day(p.end)),cy:y(100-p.two_way),r:3,fill:'var(--lula)','fill-opacity':.35},g);
   }
-  const series = (arr, key) => arr.map((r,i)=>({d:r.d, v:r[key], brk: i>0 && arr[i-1].phase!==r.phase}));
-  const draw = (arr, w, op) => {
-    el('path',{d:linePath(series(arr,'flavio'),x,y),fill:'none',stroke:'var(--flavio)','stroke-width':w,'stroke-opacity':op,'stroke-linejoin':'round'},svg);
-    el('path',{d:linePath(series(arr,'lula'),x,y),fill:'none',stroke:'var(--lula)','stroke-width':w,'stroke-opacity':op,'stroke-linejoin':'round'},svg);
-  };
-  const ours = D.avg_ours.filter(r=>day(r.d)>=x0), pp = D.avg_pp.filter(r=>day(r.d)>=x0);
-  const both = state.avg==='both';
-  if (state.avg!=='ours') draw(pp, both?1.5:2.25, both?.55:1);
-  if (state.avg!=='pp') draw(ours, 2.25, 1);
-  const main = state.avg==='pp' ? last(pp) : last(ours);
-  endLabels(svg, [{v:main.flavio,text:`Flávio ${pct(main.flavio)}`},{v:main.lula,text:`Lula ${pct(main.lula)}`}], y);
-
-  const sw = (c,o,w) => `<span class="sw" style="color:${c};opacity:${o};border-top-width:${w}px"></span>`;
-  $('#lg-polls').innerHTML =
-    `<span><span class="sw dot" style="color:var(--flavio);opacity:.5"></span> Flávio</span><span><span class="sw dot" style="color:var(--lula);opacity:.5"></span> Lula</span>` +
-    (state.avg!=='pp' ? `<span>${sw('var(--fg)',1,2)} Our average</span>` : '') +
-    (state.avg!=='ours' ? `<span>${sw('var(--fg)',both?.55:1,both?1.5:2)} Plano Político average</span>` : '');
-  $('#note-polls').textContent = state.range==='all' ? 'Shaded: before the first round, when Lula × Flávio was a hypothetical matchup.' : `${runoffPolls.length} runoff polls since Oct 5.`;
-
-  const byD = (arr,d) => arr.find(r=>r.d===d);
+  const avg = (state.avg==='pp' ? D.avg_pp : D.avg_ours).filter(r=>day(r.d)>=x0);
+  for (const c of ['flavio','lula'])
+    el('path',{d:linePath(avg.map((r,i)=>({d:r.d,v:r[c],brk:i>0&&avg[i-1].phase!==r.phase})),x,y),fill:'none',stroke:`var(--${c})`,'stroke-width':2.25,'stroke-linejoin':'round'},svg);
+  const a = last(avg);
+  endLabels(svg, [{v:a.flavio,text:`Flávio ${pct(a.flavio)}`},{v:a.lula,text:`Lula ${pct(a.lula)}`}], y);
+  $('#big-polls').innerHTML = `<span class="f">Flávio <span class="n">${pct(a.flavio)}<small>%</small></span></span><span class="l">Lula <span class="n">${pct(a.lula)}<small>%</small></span></span>`;
   attachHover('polls', svg, {x,y}, $('#tip-polls'), d=>{
-    const o = byD(D.avg_ours,d), q = byD(D.avg_pp,d), rows=[], pts=[];
-    if (state.avg!=='pp' && o){ rows.push({k:'Ours · Flávio',v:pct(o.flavio),c:'var(--flavio)'},{k:'Ours · Lula',v:pct(o.lula),c:'var(--lula)'}); pts.push({v:o.flavio,c:'var(--flavio)'},{v:o.lula,c:'var(--lula)'}); }
-    if (state.avg!=='ours' && q){ rows.push({k:'PP · Flávio',v:pct(q.flavio),c:'var(--flavio)'},{k:'PP · Lula',v:pct(q.lula),c:'var(--lula)'}); if(state.avg==='pp') pts.push({v:q.flavio,c:'var(--flavio)'},{v:q.lula,c:'var(--lula)'}); }
+    const r = (state.avg==='pp' ? D.avg_pp : D.avg_ours).find(r=>r.d===d);
+    const rows = r ? [{k:'Flávio',v:pct(r.flavio),c:'var(--flavio)',dot:r.flavio},{k:'Lula',v:pct(r.lula),c:'var(--lula)',dot:r.lula}] : [];
     const ended = D.polls.filter(p=>p.end===d);
-    const extra = ended.length ? `<div class="pl">${ended.map(p=>`${p.pollster} · Flávio ${pct(p.two_way)}`).join('<br>')}</div>` : '';
-    return {rows, extra, pts};
+    return {rows, extra: ended.length ? `<div class="pl">${ended.map(p=>`${p.pollster}: Flávio ${pct(p.two_way)}`).join('<br>')}</div>` : ''};
   });
 }
 
-// ---- probability chart
+// ---- chance of winning: both candidates, model vs market, shaded range between
 function drawProb(){
-  const svg = $('#svg-prob'), c = state.cand; size(svg);
-  const [x0,x1] = xDomain();
-  const {x,y} = frame(svg, x0, x1, 0, 100, [0,25,50,75,100], v=>v+'%');
-  markers(svg, x, x0, x1, true);
-  el('line',{x1:M.l,x2:W-M.r,y1:y(50),y2:y(50),stroke:'var(--faint)','stroke-width':1},svg);
-  const col = `var(--${c})`;
-  const mod = D.model.filter(r=>day(r.d)>=x0).map((r,i,a)=>({d:r.d,v:r[c],brk:i>0 && a[i-1].d<=D.round1 && r.d>D.round1}));
-  const mkt = D.market.filter(r=>day(r.d)>=x0).map(r=>({d:r.d,v:r[c]}));
-  el('path',{d:linePath(mkt,x,y),fill:'none',stroke:'var(--market)','stroke-width':2,'stroke-linejoin':'round'},svg);
-  el('path',{d:linePath(mod,x,y),fill:'none',stroke:col,'stroke-width':2.25,'stroke-linejoin':'round'},svg);
-  const lm = last(mod), lk = last(mkt);
-  endLabels(svg, [{v:lm.v,text:`Model ${Math.round(lm.v)}%`},{v:lk.v,text:`Market ${Math.round(lk.v)}%`}], y);
-  $('#prob-title').textContent = `Chance ${NAME[c]} wins`;
-  $('#lg-prob').innerHTML = `<span><span class="sw" style="color:${col}"></span> Plano Político model</span><span><span class="sw" style="color:var(--market)"></span> Polymarket</span>`;
-  $('#note-prob').textContent = state.range==='all' ? 'Shaded: the first-round model, which also counts first-round wins and other matchups.' : `Model ${D.model_meta.as_of} · market volume $${Math.round((D.market_meta.volume||0)/1e6)}M`;
-  const byD = (arr,d) => arr.find(r=>r.d===d);
+  const svg = $('#svg-prob'); size(svg);
+  const [x0] = xDomain();
+  const {x,y} = frame(svg, 0, 100, [0,25,50,75,100]);
+  const mkt = new Map(D.market.map(r=>[r.d,r]));
+  const mod = D.model.filter(r=>day(r.d)>=x0);
+  const brk = (r,i,a) => i>0 && a[i-1].d<=D.round1 && r.d>D.round1;
+  for (const c of ['flavio','lula']){
+    const col = `var(--${c})`;
+    const both = mod.map((r,i,a)=>({d:r.d, v:r[c], b:mkt.get(r.d)?.[c], brk:brk(r,i,a)})).filter(p=>p.v!=null && p.b!=null);
+    for (const s of segments(both)){
+      const top = s.map((p,i)=>(i?'L':'M')+x(day(p.d)).toFixed(1)+','+y(p.v).toFixed(1)).join('');
+      const bot = [...s].reverse().map(p=>'L'+x(day(p.d)).toFixed(1)+','+y(p.b).toFixed(1)).join('');
+      el('path',{d:top+bot+'Z',fill:col,'fill-opacity':.16,stroke:'none'},svg);
+    }
+    const mk = D.market.filter(r=>day(r.d)>=x0).map(r=>({d:r.d,v:r[c]}));
+    el('path',{d:linePath(mk,x,y),fill:'none',stroke:col,'stroke-width':1,'stroke-opacity':.85,'stroke-linejoin':'round'},svg);
+    el('path',{d:linePath(mod.map((r,i,a)=>({d:r.d,v:r[c],brk:brk(r,i,a)})),x,y),fill:'none',stroke:col,'stroke-width':2.25,'stroke-linejoin':'round'},svg);
+  }
+  const m = last(D.model), k = last(D.market);
+  const rng = c => { const a=Math.round(m[c]), b=Math.round(k[c]); return a===b ? `${a}` : `${Math.min(a,b)}–${Math.max(a,b)}`; };
+  endLabels(svg, [{v:(m.flavio+k.flavio)/2,text:`Flávio ${rng('flavio')}%`},{v:(m.lula+k.lula)/2,text:`Lula ${rng('lula')}%`}], y);
+  $('#big-prob').innerHTML = `<span class="f">Flávio <span class="n">${rng('flavio')}<small>%</small></span></span><span class="l">Lula <span class="n">${rng('lula')}<small>%</small></span></span>`;
   attachHover('prob', svg, {x,y}, $('#tip-prob'), d=>{
-    const a = byD(D.model,d), b = byD(D.market,d), rows=[], pts=[];
-    if (a && a[c]!=null){ rows.push({k:'Model',v:pct(a[c])+'%',c:col}); pts.push({v:a[c],c:col}); }
-    if (b && b[c]!=null){ rows.push({k:'Polymarket',v:pct(b[c])+'%',c:'var(--market)'}); pts.push({v:b[c],c:'var(--market)'}); }
-    return {rows, pts};
+    const a = D.model.find(r=>r.d===d), b = mkt.get(d), rows=[];
+    for (const [c,n] of [['flavio','Flávio'],['lula','Lula']]){
+      if (a?.[c]!=null) rows.push({k:`${n} · model`,v:pct(a[c],0)+'%',c:`var(--${c})`,dot:a[c]});
+      if (b?.[c]!=null) rows.push({k:`${n} · Polymarket`,v:pct(b[c],0)+'%',c:`var(--${c})`,dot:b[c]});
+    }
+    return {rows};
   });
 }
 
-// ---- tables
-function rowsHTML(list){
-  return `<thead><tr><th>Field end</th><th>Pollster</th><th class="hide-sm">n</th><th>Lula</th><th>Flávio</th><th>Flávio two-way</th></tr></thead><tbody>` +
-    list.map(p=>{
-      const name = p.url ? `<a href="${p.url}" target="_blank" rel="noopener">${p.pollster}</a>` : p.pollster;
-      const reg = p.reg ? ` <span class="note hide-sm" style="margin:0">${p.reg}</span>` : '';
-      return `<tr><td>${fmtD(p.end)}</td><td>${name}${reg}</td><td class="hide-sm">${p.n?p.n.toLocaleString('en-US'):'–'}</td><td>${pct(p.lula)}</td><td>${pct(p.flavio)}</td><td>${pct(p.two_way)} <span class="bar hide-sm"><i style="width:${p.two_way}%"></i></span></td></tr>`;
-    }).join('') + '</tbody>';
-}
-$('#tbl').innerHTML = rowsHTML([...runoffPolls].reverse());
-$('#tbl-pre').innerHTML = rowsHTML(D.polls.filter(p=>p.phase==='pre').reverse());
-$('#updated').innerHTML = `Data updated ${new Date(D.updated_at).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})}. <a href="data/data.json">data.json</a>`;
+// ---- table
+const field = p => {
+  if (!p.start || p.start===p.end) return fmtD(p.end);
+  const a = fmtD(p.start), b = fmtD(p.end);
+  return a.split(' ')[0]===b.split(' ')[0] ? `${a}–${b.split(' ')[1]}` : `${a}–${b}`;
+};
+const runoff = D.polls.filter(p=>p.phase==='runoff').reverse();
+$('#tbl').innerHTML = `<thead><tr><th class="t">Fieldwork</th><th class="t">Pollster</th><th>Sample</th><th class="t">Mode</th><th>Lula</th><th>Flávio</th><th>Undecided</th><th>Flávio two-way</th><th class="t">TSE reg.</th></tr></thead><tbody>` +
+  runoff.map(p=>`<tr><td class="t">${field(p)}</td><td class="t">${p.url?`<a href="${p.url}" target="_blank" rel="noopener">${p.pollster}</a>`:p.pollster}</td><td>${p.n?p.n.toLocaleString('en-US'):'–'}</td><td class="t">${MODE[p.mode]||p.mode||'–'}</td><td>${pct(p.lula)}</td><td>${pct(p.flavio)}</td><td>${pct(Math.max(0,100-p.lula-p.flavio))}</td><td>${pct(p.two_way)}</td><td class="t reg">${p.reg||'–'}</td></tr>`).join('') + '</tbody>';
+$('#foot').innerHTML = `Polls &amp; model: <a href="https://planopolitico.com.br/agregador/">Plano Político</a> · Market: <a href="https://polymarket.com/event/brazil-presidential-election">Polymarket</a> · Updated ${new Date(D.updated_at).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})}`;
 
 // ---- controls
 function render(){
   document.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(state[s.dataset.ctl]===b.dataset.v))));
   drawPolls(); drawProb();
 }
-document.querySelectorAll('.seg').forEach(s=>s.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; state[s.dataset.ctl]=b.dataset.v; render(); }));
+document.querySelectorAll('.seg').forEach(s=>s.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b){ state[s.dataset.ctl]=b.dataset.v; render(); } }));
+let rz; addEventListener('resize', ()=>{ clearTimeout(rz); rz=setTimeout(render,120); });
 render();
-let rz; addEventListener('resize', ()=>{ clearTimeout(rz); rz = setTimeout(render, 120); });
 })();
 </script>
 </body>
