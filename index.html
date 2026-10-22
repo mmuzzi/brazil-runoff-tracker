@@ -61,6 +61,9 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
 th{font-family:var(--f-mono);font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule)}
 td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:right}
 th.t,td.t{text-align:left}
+tr.grp th{border-bottom:0;padding-bottom:0;color:var(--fg)}
+tr.grp th[colspan='2'],tr.grp th[colspan='3']{text-align:center;border-bottom:1px solid var(--rule);padding-bottom:4px}
+th.g,td.g{padding-left:22px}
 td.reg{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
 .foot{margin-top:20px;font-size:12px;color:var(--faint)}
 .err{color:var(--lula)}
@@ -122,13 +125,13 @@ const MODE = {Presencial:'In person', Telefone:'Phone', Internet:'Online', Misto
 // ---- svg helpers
 const NS = 'http://www.w3.org/2000/svg';
 function el(tag, attrs, parent){ const e=document.createElementNS(NS,tag); for(const a in attrs) e.setAttribute(a,attrs[a]); if(parent) parent.appendChild(e); return e; }
-function segments(pts){
+function segments(pts, maxGap=3){
   // split on the first-round regime change and on gaps > 3 days
   const out=[]; let cur=[];
   for (const p of pts){
     if (p.v==null){ if(cur.length) out.push(cur); cur=[]; continue; }
     const prev = cur[cur.length-1];
-    if (prev && (p.brk || day(p.d)-day(prev.d) > 3*864e5)){ out.push(cur); cur=[]; }
+    if (prev && (p.brk || day(p.d)-day(prev.d) > maxGap*864e5)){ out.push(cur); cur=[]; }
     cur.push(p);
   }
   if (cur.length) out.push(cur);
@@ -244,31 +247,69 @@ function drawPolls(){
 }
 
 // ---- chance of winning: both candidates, model vs market, shaded range between
+// monotone cubic (Fritsch–Carlson): smooth, never overshoots the data.
+// Returns one cubic piece per interval so each can be styled on its own.
+function smoothPieces(P){
+  const n=P.length, f=v=>v.toFixed(1), out=[];
+  if (n<2) return out;
+  const dx=[], m=[], t=new Array(n);
+  for (let i=0;i<n-1;i++){ dx[i]=P[i+1][0]-P[i][0]; m[i]=(P[i+1][1]-P[i][1])/dx[i]; }
+  t[0]=m[0]; t[n-1]=m[n-2];
+  for (let i=1;i<n-1;i++) t[i] = m[i-1]*m[i]<=0 ? 0 : 3*(dx[i-1]+dx[i])/((2*dx[i]+dx[i-1])/m[i-1]+(dx[i]+2*dx[i-1])/m[i]);
+  for (let i=0;i<n-1;i++){ const h=dx[i]/3;
+    out.push(`${f(P[i][0])},${f(P[i][1])}C${f(P[i][0]+h)},${f(P[i][1]+h*t[i])} ${f(P[i+1][0]-h)},${f(P[i+1][1]-h*t[i+1])} ${f(P[i+1][0])},${f(P[i+1][1])}`); }
+  return out;  // each piece: "x0,y0Cc1 c2 x1,y1"
+}
+const smooth = (P, cont) => P.length<2 ? '' : smoothPieces(P).map((s,i)=>i ? 'C'+s.split('C')[1] : (cont?'L':'M')+s).join('');
+// a candidate's daily values; gaps of up to 3 missing days are filled linearly and flagged est:true
+// (never across the first round, where the series change meaning)
+function series(rows, c){
+  const obs = rows.filter(r=>r[c]!=null).map(r=>({d:r.d, v:r[c]})), out=[];
+  obs.forEach((p,i)=>{
+    const q = obs[i-1], gap = q ? Math.round((day(p.d)-day(q.d))/864e5) : 1;
+    if (gap>1 && gap<=4 && !(q.d<=D.round1 && p.d>D.round1)) for (let k=1;k<gap;k++)
+      out.push({d:new Date(day(q.d)+k*864e5).toISOString().slice(0,10), v:q.v+(p.v-q.v)*k/gap, est:true});
+    out.push(p);
+  });
+  return out;
+}
 function drawProb(){
   const svg = $('#svg-prob'); size(svg);
   const [x0] = xDomain();
   const {x,y} = frame(svg, 0, 100, [0,25,50,75,100]);
-  const mkt = new Map(D.market.map(r=>[r.d,r]));
-  const mod = D.model.filter(r=>day(r.d)>=x0);
-  const brk = (r,i,a) => i>0 && a[i-1].d<=D.round1 && r.d>D.round1;
+  // in the runoff view, show only post-first-round days (earlier values include round-1 wins)
+  const keep = r => day(r.d)>=x0 && (state.range!=='runoff' || r.d>D.round1);
+  const mod = D.model.filter(keep), mk = D.market.filter(keep);
+  const pts = ser => segments(ser.map((p,i,a)=>({...p, brk:i>0 && a[i-1].d<=D.round1 && p.d>D.round1})), 1)
+                                          .map(s=>s.map(p=>[x(day(p.d)), y(p.v), p.d, p.est]));
   for (const c of ['flavio','lula']){
-    const col = `var(--${c})`;
-    const both = mod.map((r,i,a)=>({d:r.d, v:r[c], b:mkt.get(r.d)?.[c], brk:brk(r,i,a)})).filter(p=>p.v!=null && p.b!=null);
-    for (const s of segments(both)){
-      const top = s.map((p,i)=>(i?'L':'M')+x(day(p.d)).toFixed(1)+','+y(p.v).toFixed(1)).join('');
-      const bot = [...s].reverse().map(p=>'L'+x(day(p.d)).toFixed(1)+','+y(p.b).toFixed(1)).join('');
-      el('path',{d:top+bot+'Z',fill:col,'fill-opacity':.16,stroke:'none'},svg);
+    const col = `var(--${c})`, M = series(mod,c), K = series(mk,c), km = new Map(K.map(p=>[p.d,p.v]));
+    // band: model edge forward, market edge back
+    const both = M.filter(p=>km.has(p.d)).map(p=>({d:p.d, v:p.v, b:km.get(p.d)}));
+    for (const s of segments(both.map((p,i,a)=>({...p, brk:i>0 && a[i-1].d<=D.round1 && p.d>D.round1})), 1)){
+      if (s.length<2) continue;
+      const top = smooth(s.map(p=>[x(day(p.d)), y(p.v)]));
+      const bot = smooth([...s].reverse().map(p=>[x(day(p.d)), y(p.b)]), true);
+      el('path',{d:top+bot+'Z',fill:col,'fill-opacity':.13,stroke:'none'},svg);
     }
-    const mk = D.market.filter(r=>day(r.d)>=x0).map(r=>({d:r.d,v:r[c]}));
-    el('path',{d:linePath(mk,x,y),fill:'none',stroke:col,'stroke-width':1,'stroke-opacity':.85,'stroke-linejoin':'round'},svg);
-    el('path',{d:linePath(mod.map((r,i,a)=>({d:r.d,v:r[c],brk:brk(r,i,a)})),x,y),fill:'none',stroke:col,'stroke-width':2.25,'stroke-linejoin':'round'},svg);
+    // solid where both ends of a day are real data, dashed across interpolated days
+    const draw = (ser, attrs) => { for (const s of pts(ser)){
+      const pieces = smoothPieces(s);
+      const solid = pieces.filter((_,i)=>!s[i][3] && !s[i+1][3]), dashed = pieces.filter((_,i)=>s[i][3] || s[i+1][3]);
+      if (solid.length) el('path',{d:solid.map(p=>'M'+p).join(''),fill:'none',stroke:col,'stroke-linecap':'round',...attrs},svg);
+      if (dashed.length) el('path',{d:dashed.map(p=>'M'+p).join(''),fill:'none',stroke:col,'stroke-dasharray':'3 4',...attrs},svg);
+    }};
+    draw(K, {'stroke-width':1.1,'stroke-opacity':.6});
+    draw(M, {'stroke-width':2.5});
   }
+  const mkt = new Map(D.market.map(r=>[r.d,r]));
   const m = last(D.model), k = last(D.market);
   const rng = c => { const a=Math.round(m[c]), b=Math.round(k[c]); return a===b ? `${a}` : `${Math.min(a,b)}–${Math.max(a,b)}`; };
   endLabels(svg, [{v:(m.flavio+k.flavio)/2,text:`Flávio ${rng('flavio')}%`},{v:(m.lula+k.lula)/2,text:`Lula ${rng('lula')}%`}], y);
   $('#big-prob').innerHTML = `<span class="f">Flávio <span class="n">${rng('flavio')}<small>%</small></span></span><span class="l">Lula <span class="n">${rng('lula')}<small>%</small></span></span>`;
   attachHover('prob', svg, {x,y}, $('#tip-prob'), d=>{
     const a = D.model.find(r=>r.d===d), b = mkt.get(d), rows=[];
+    if (state.range==='runoff' && d<=D.round1) return {rows};
     for (const [c,n] of [['flavio','Flávio'],['lula','Lula']]){
       if (a?.[c]!=null) rows.push({k:`${n} · model`,v:pct(a[c],0)+'%',c:`var(--${c})`,dot:a[c]});
       if (b?.[c]!=null) rows.push({k:`${n} · Polymarket`,v:pct(b[c],0)+'%',c:`var(--${c})`,dot:b[c]});
@@ -283,9 +324,11 @@ const field = p => {
   const a = fmtD(p.start), b = fmtD(p.end);
   return a.split(' ')[0]===b.split(' ')[0] ? `${a}–${b.split(' ')[1]}` : `${a}–${b}`;
 };
+// polls that only publish valid votes (e.g. Veritá) have no total-vote breakdown
 const runoff = D.polls.filter(p=>p.phase==='runoff').reverse();
-$('#tbl').innerHTML = `<thead><tr><th class="t">Fieldwork</th><th class="t">Pollster</th><th>Sample</th><th class="t">Mode</th><th>Lula</th><th>Flávio</th><th>Undecided</th><th>Flávio two-way</th><th class="t">TSE reg.</th></tr></thead><tbody>` +
-  runoff.map(p=>`<tr><td class="t">${field(p)}</td><td class="t">${p.url?`<a href="${p.url}" target="_blank" rel="noopener">${p.pollster}</a>`:p.pollster}</td><td>${p.n?p.n.toLocaleString('en-US'):'–'}</td><td class="t">${MODE[p.mode]||p.mode||'–'}</td><td>${pct(p.lula)}</td><td>${pct(p.flavio)}</td><td>${pct(Math.max(0,100-p.lula-p.flavio))}</td><td>${pct(p.two_way)}</td><td class="t reg">${p.reg||'–'}</td></tr>`).join('') + '</tbody>';
+$('#tbl').innerHTML = `<thead><tr class="grp"><th class="t" colspan="4"></th><th colspan="2">Valid votes</th><th colspan="3">Total votes</th><th></th></tr>` +
+  `<tr><th class="t">Fieldwork</th><th class="t">Pollster</th><th>Sample</th><th class="t">Mode</th><th class="g">Lula</th><th>Flávio</th><th class="g">Lula</th><th>Flávio</th><th title="Undecided, blank and null">Undecided</th><th class="t g">TSE reg.</th></tr></thead><tbody>` +
+  runoff.map(p=>`<tr><td class="t">${field(p)}</td><td class="t">${p.url?`<a href="${p.url}" target="_blank" rel="noopener">${p.pollster}</a>`:p.pollster}</td><td>${p.n?p.n.toLocaleString('en-US'):'–'}</td><td class="t">${MODE[p.mode]||p.mode||'–'}</td><td class="g">${pct(100-p.two_way)}</td><td>${pct(p.two_way)}</td>${p.lula+p.flavio>=99.95 ? '<td class="g">–</td><td>–</td><td>–</td>' : `<td class="g">${pct(p.lula)}</td><td>${pct(p.flavio)}</td><td>${pct(Math.max(0,100-p.lula-p.flavio))}</td>`}<td class="t reg g">${p.reg||'–'}</td></tr>`).join('') + '</tbody>';
 $('#foot').innerHTML = `Polls &amp; model: <a href="https://planopolitico.com.br/agregador/">Plano Político</a> · Market: <a href="https://polymarket.com/event/brazil-presidential-election">Polymarket</a> · Updated ${new Date(D.updated_at).toLocaleString('en-US',{dateStyle:'medium',timeStyle:'short'})}`;
 
 // ---- controls
