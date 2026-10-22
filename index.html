@@ -30,7 +30,8 @@ h2{font-family:var(--f-display);font-weight:600;font-size:21px;margin:0}
 .seg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--panel)}
 .seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--muted);padding:5px 12px;cursor:pointer}
 .seg button+button{border-left:1px solid var(--rule)}
-.seg button[aria-pressed=true]{background:var(--hi);color:var(--fg);font-weight:600}
+.tog{font:inherit;font-size:13px;border:1px solid var(--rule);border-radius:8px;background:var(--panel);color:var(--muted);padding:5px 12px;cursor:pointer}
+.tog[aria-pressed=true],.seg button[aria-pressed=true]{background:var(--hi);color:var(--fg);font-weight:600}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 16px 10px;position:relative;min-width:0}
 .card .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -75,9 +76,9 @@ td.reg{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
 
   <div class="charts">
     <div class="card">
-      <div class="hd"><h2>Polls</h2><span class="seg" data-ctl="avg"><button data-v="ours">Our average</button><button data-v="pp">Plano Político</button></span></div>
+      <div class="hd"><h2>Polls</h2><span style="display:inline-flex;gap:8px;flex-wrap:wrap"><button class="tog" id="tog-2022">2022 comparison</button><span class="seg" data-ctl="avg"><button data-v="ours">Our average</button><button data-v="pp">Plano Político</button></span></span></div>
       <div class="big" id="big-polls"></div>
-      <div class="legend"><span><span class="sw"></span>2026</span><span><span class="sw dash"></span>2022 Bolsonaro × Lula, same days before runoff</span><span><span class="sw ring"></span>2022 result</span></div>
+      <div class="legend" id="leg-2022"><span><span class="sw"></span>2026</span><span><span class="sw dash"></span>2022 Bolsonaro × Lula, same days before runoff</span><span><span class="sw ring"></span>2022 result</span></div>
       <svg class="chart" id="svg-polls" role="img" aria-label="Poll average, two-way vote share"></svg>
       <div class="tip" id="tip-polls"></div>
     </div>
@@ -111,7 +112,7 @@ try {
   return;
 }
 
-const state = {range:'runoff', avg:'ours'};
+const state = {range:'runoff', avg:'ours', y2022:false};
 const day = s => Date.parse(s + 'T12:00:00Z');
 const fmtD = s => new Date(day(s)).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
 const pct = (v,d=1) => v==null ? '–' : v.toFixed(d);
@@ -209,7 +210,7 @@ function drawPolls(){
   const svg = $('#svg-polls'); size(svg);
   const [x0,x1] = xDomain();
   const polls = D.polls.filter(p => day(p.end) >= x0 && day(p.end) <= x1);
-  const y22 = D.y2022.avg.filter(r=>day(r.d)>=x0 && day(r.d)<=x1);
+  const y22 = !state.y2022 ? [] : D.y2022.avg.filter(r=>day(r.d)>=x0 && day(r.d)<=x1);
   const ext = polls.flatMap(p=>[p.two_way, 100-p.two_way]).concat(y22.flatMap(r=>[r.bolsonaro, r.lula]));
   const y0 = Math.floor(Math.min(46,...ext)/2)*2, y1 = Math.ceil(Math.max(54,...ext)/2)*2;
   const ticks=[]; for(let v=y0; v<=y1; v+=(y1-y0>16?4:2)) ticks.push(v);
@@ -220,7 +221,7 @@ function drawPolls(){
     el('circle',{cx:x(day(p.end)),cy:y(100-p.two_way),r:3,fill:'var(--lula)','fill-opacity':.35},g);
   }
   // 2022 runoff, shifted so its runoff day lands on this one
-  for (const [c,k] of [['flavio','bolsonaro'],['lula','lula']]){
+  if (state.y2022) for (const [c,k] of [['flavio','bolsonaro'],['lula','lula']]){
     el('path',{d:linePath(y22.map(r=>({d:r.d,v:r[k]})),x,y),fill:'none',stroke:`var(--${c})`,'stroke-width':1.5,'stroke-dasharray':'5 4','stroke-opacity':.7},svg);
     el('circle',{cx:x(day(D.runoff)),cy:y(D.y2022.result[k]),r:4.5,fill:'var(--panel)',stroke:`var(--${c})`,'stroke-width':1.75},svg);
   }
@@ -229,13 +230,13 @@ function drawPolls(){
     el('path',{d:linePath(avg.map((r,i)=>({d:r.d,v:r[c],brk:i>0&&avg[i-1].phase!==r.phase})),x,y),fill:'none',stroke:`var(--${c})`,'stroke-width':2.25,'stroke-linejoin':'round'},svg);
   const a = last(avg);
   const R = D.y2022.result;
-  endLabels(svg, [{v:a.flavio,text:`Flávio ${pct(a.flavio)}`},{v:a.lula,text:`Lula ${pct(a.lula)}`},
-    {v:R.bolsonaro,text:`2022 Bolso. ${pct(R.bolsonaro)}`,muted:1},{v:R.lula,text:`2022 Lula ${pct(R.lula)}`,muted:1}], y);
+  endLabels(svg, [{v:a.flavio,text:`Flávio ${pct(a.flavio)}`},{v:a.lula,text:`Lula ${pct(a.lula)}`}].concat(!state.y2022 ? [] : [
+    {v:R.bolsonaro,text:`2022 Bolso. ${pct(R.bolsonaro)}`,muted:1},{v:R.lula,text:`2022 Lula ${pct(R.lula)}`,muted:1}]), y);
   $('#big-polls').innerHTML = `<span class="f">Flávio <span class="n">${pct(a.flavio)}<small>%</small></span></span><span class="l">Lula <span class="n">${pct(a.lula)}<small>%</small></span></span>`;
   attachHover('polls', svg, {x,y}, $('#tip-polls'), d=>{
     const r = (state.avg==='pp' ? D.avg_pp : D.avg_ours).find(r=>r.d===d);
     const rows = r ? [{k:'Flávio',v:pct(r.flavio),c:'var(--flavio)',dot:r.flavio},{k:'Lula',v:pct(r.lula),c:'var(--lula)',dot:r.lula}] : [];
-    const ended = D.polls.filter(p=>p.end===d), o = D.y2022.avg.find(r=>r.d===d);
+    const ended = D.polls.filter(p=>p.end===d), o = state.y2022 && D.y2022.avg.find(r=>r.d===d);
     const old = o ? `<div class="pl">2022 (${fmtD(o.d22)}): Bolsonaro ${pct(o.bolsonaro)} · Lula ${pct(o.lula)}${d===D.runoff?`<br>2022 result: Bolsonaro ${pct(D.y2022.result.bolsonaro)} · Lula ${pct(D.y2022.result.lula)}`:''}</div>` : '';
     if (!rows.length && o) rows.push({k:'2022 Bolsonaro',v:pct(o.bolsonaro),c:'var(--flavio)',dot:o.bolsonaro},{k:'2022 Lula',v:pct(o.lula),c:'var(--lula)',dot:o.lula});
     return {rows, extra: old + (ended.length ? `<div class="pl">${ended.map(p=>`${p.pollster}: Flávio ${pct(p.two_way)}`).join('<br>')}</div>` : '')};
@@ -290,9 +291,12 @@ $('#foot').innerHTML = `Polls &amp; model: <a href="https://planopolitico.com.br
 // ---- controls
 function render(){
   document.querySelectorAll('.seg').forEach(s=>s.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', String(state[s.dataset.ctl]===b.dataset.v))));
+  $('#tog-2022').setAttribute('aria-pressed', String(state.y2022));
+  $('#leg-2022').style.display = state.y2022 ? '' : 'none';
   drawPolls(); drawProb();
 }
 document.querySelectorAll('.seg').forEach(s=>s.addEventListener('click',e=>{ const b=e.target.closest('button'); if(b){ state[s.dataset.ctl]=b.dataset.v; render(); } }));
+$('#tog-2022').addEventListener('click', ()=>{ state.y2022 = !state.y2022; render(); });
 let rz; addEventListener('resize', ()=>{ clearTimeout(rz); rz=setTimeout(render,120); });
 render();
 })();
