@@ -20,6 +20,10 @@ RUNOFF = "2026-10-25"
 START = "2026-04-01"
 WINDOW_DAYS = {"pre": 30, "runoff": 14}  # pre-round polls are sparse
 MIN_HOUSES = 3
+# 2022 runoff (Lula × Bolsonaro), for comparison aligned on days before the runoff
+ROUND1_2022 = "2022-10-02"
+RUNOFF_2022 = "2022-10-30"
+RESULT_2022 = {"bolsonaro": 49.10, "lula": 50.90}  # TSE final, valid votes
 
 NAMES = {
     "NEXUS": "Nexus", "PALVER": "Palver", "INDEXA PESQUISAS": "Indexa",
@@ -103,15 +107,13 @@ def extra_polls():
     return out
 
 
-def our_average(polls, today):
-    """Day T = mean two-way Flávio share of each house's latest poll in (T-window, T].
-    Pre- and post-first-round regimes are computed separately."""
-    out = []
-    d = dt.date.fromisoformat(START)
-    end = min(today, dt.date.fromisoformat(RUNOFF))
+def house_average(polls, start, end, round1):
+    """Day T = mean two-way share of each house's latest poll in (T-window, T].
+    Pre- and post-first-round regimes are computed separately. Yields (T, phase, mean, houses)."""
+    d = start
     while d <= end:
         T = d.isoformat()
-        phase = "pre" if T <= ROUND1 else "runoff"
+        phase = "pre" if T <= round1 else "runoff"
         lo = (d - dt.timedelta(days=WINDOW_DAYS[phase])).isoformat()
         latest = {}
         for p in polls:
@@ -120,11 +122,32 @@ def our_average(polls, today):
             if p["pollster"] not in latest or p["end"] > latest[p["pollster"]]["end"]:
                 latest[p["pollster"]] = p
         if len(latest) >= MIN_HOUSES:
-            v = sum(p["two_way"] for p in latest.values()) / len(latest)
-            out.append({"d": T, "phase": phase, "flavio": round(v, 2),
-                        "lula": round(100 - v, 2), "houses": len(latest)})
+            yield T, phase, sum(p["two_way"] for p in latest.values()) / len(latest), len(latest)
         d += dt.timedelta(days=1)
-    return out
+
+
+def our_average(polls, today):
+    end = min(today, dt.date.fromisoformat(RUNOFF))
+    return [{"d": T, "phase": ph, "flavio": round(v, 2), "lula": round(100 - v, 2), "houses": n}
+            for T, ph, v, n in house_average(polls, dt.date.fromisoformat(START), end, ROUND1)]
+
+
+def avg_2022():
+    """2022 runoff average, same method, with each day shifted so RUNOFF_2022 lands on RUNOFF."""
+    polls = []
+    with open(DATA / "archive" / "polls_2022_runoff.csv", newline="") as f:
+        for r in csv.DictReader(f):
+            lula, bolso = float(r["lula"]), float(r["bolsonaro"])
+            polls.append({"end": r["field_end"], "pollster": r["pollster"], "phase": "runoff",
+                          "two_way": 100 * bolso / (bolso + lula)})
+    r1, ro = dt.date.fromisoformat(ROUND1_2022), dt.date.fromisoformat(RUNOFF_2022)
+    shift = dt.date.fromisoformat(RUNOFF) - ro
+    out = [{"d": (dt.date.fromisoformat(T) + shift).isoformat(), "d22": T,
+            "bolsonaro": round(v, 2), "lula": round(100 - v, 2), "houses": n}
+           for T, _, v, n in house_average(polls, r1 + dt.timedelta(days=1), ro, ROUND1_2022)]
+    if not out:
+        raise RuntimeError("2022 average: no days with enough houses")
+    return {"round1": ROUND1_2022, "runoff": RUNOFF_2022, "result": RESULT_2022, "avg": out}
 
 
 # ---------------------------------------------------------------- model
@@ -206,6 +229,7 @@ def main():
         "polls": polls,
         "avg_ours": our_average(polls, today),
         "avg_pp": [r for r in pp_avg if r["d"] >= START],
+        "y2022": avg_2022(),
         "model": [r for r in model if r["d"] >= START],
         "model_meta": model_meta,
         "market": [r for r in market if r["d"] >= START],

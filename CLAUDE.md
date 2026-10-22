@@ -4,7 +4,7 @@ Live: https://mmuzzi.github.io/brazil-runoff-tracker/ · Repo: github.com/mmuzzi
 Runoff is **2026-10-25**. Rebuilt and simplified on 2026-10-22. The earlier claude.ai prototype had calibration panels and house effects. They were dropped; the old CSVs are in `data/archive/`.
 
 ## Layout
-- `index.html`: single file, vanilla JS + hand-drawn SVG, no deps; fetches `data/data.json`. Kept deliberately minimal (owner asked 2026-10-22 to strip copy): title, range toggle, Polls chart (our avg / PP avg toggle), Chance chart (both candidates; model = thick line, Polymarket = thin, shaded range between), runoff polls table, one-line footer.
+- `index.html`: single file, vanilla JS + hand-drawn SVG, no deps; fetches `data/data.json`. Kept deliberately minimal (owner asked 2026-10-22 to strip copy): title, range toggle, Polls chart (our avg / PP avg toggle, plus a dashed 2022 Bolsonaro × Lula average shifted so 2022-10-30 lands on the 2026 runoff, with rings for the 2022 result), Chance chart (both candidates; model = thick line, Polymarket = thin, shaded range between), runoff polls table, one-line footer.
 - `scripts/update.py`: stdlib-only. It rebuilds `data/data.json` and fails loudly (exit 1, nothing written) if any source breaks.
 - `data/polls_extra.csv`: manual runoff polls that Plano Político doesn't carry (Vox Brasil, Veritá). PP deliberately removed Vox on 2026-10-18.
 - `data/model_history.json`: merged model series, so history survives if PP drops days from its chart.
@@ -17,6 +17,8 @@ Runoff is **2026-10-25**. Rebuilt and simplified on 2026-10-22. The earlier clau
 
 ## Method (our average)
 Flávio two-way share = flavio / (lula + flavio). Day T = equal-weight mean of each pollster's latest poll in (T−window, T], with window = 14d in the runoff and 30d before Oct 4 (sparse polls). It needs ≥3 houses. There's a regime break at the first round on 2026-10-04.
+
+2022 comparison: `avg_2022()` runs the same method over `data/archive/polls_2022_runoff.csv` (writes `y2022` in data.json). The 2022 final average had Bolsonaro 48.4 vs an actual 49.1.
 
 ## To do / after the election
 - Election night: add the actual result as a marker and compute each pollster's final error.

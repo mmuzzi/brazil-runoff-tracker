@@ -41,6 +41,8 @@ h2{font-family:var(--f-display);font-weight:600;font-size:21px;margin:0}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .sw{display:inline-block;width:14px;border-top:2px solid var(--muted)}
 .sw.thin{border-top-width:1px}
+.sw.dash{border-top-style:dashed}
+.sw.ring{width:9px;height:9px;border:1.5px solid var(--muted);border-radius:50%}
 .sw.band{height:8px;border:0;background:var(--muted);opacity:.3;border-radius:2px}
 svg.chart{display:block;width:100%;height:auto;overflow:visible;touch-action:pan-y}
 .grid line{stroke:var(--rule)}
@@ -75,6 +77,7 @@ td.reg{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
     <div class="card">
       <div class="hd"><h2>Polls</h2><span class="seg" data-ctl="avg"><button data-v="ours">Our average</button><button data-v="pp">Plano Político</button></span></div>
       <div class="big" id="big-polls"></div>
+      <div class="legend"><span><span class="sw"></span>2026</span><span><span class="sw dash"></span>2022 Bolsonaro × Lula, same days before runoff</span><span><span class="sw ring"></span>2022 result</span></div>
       <svg class="chart" id="svg-polls" role="img" aria-label="Poll average, two-way vote share"></svg>
       <div class="tip" id="tip-polls"></div>
     </div>
@@ -132,7 +135,7 @@ function segments(pts){
 }
 const linePath = (pts,x,y) => segments(pts).map(s=>s.map((p,i)=>(i?'L':'M')+x(day(p.d)).toFixed(1)+','+y(p.v).toFixed(1)).join('')).join('');
 
-let W = 560, H = 330; const M = {t:14, r:84, b:26, l:34};
+let W = 560, H = 330; const M = {t:14, r:112, b:26, l:34};
 function size(svg){ W = Math.max(300, Math.round(svg.parentElement.clientWidth - 32)); H = Math.round(Math.min(340, Math.max(240, W*0.6))); }
 function xDomain(){
   const today = day(new Date().toISOString().slice(0,10));
@@ -163,7 +166,7 @@ function frame(svg, y0, y1, yticks){
 function endLabels(svg, items, y){
   items = items.filter(i=>i.v!=null).map(i=>({...i, yy:y(i.v)})).sort((a,b)=>a.yy-b.yy);
   for (let i=1;i<items.length;i++) if (items[i].yy - items[i-1].yy < 13) items[i].yy = items[i-1].yy + 13;
-  for (const i of items) el('text',{class:'endlbl',x:W-M.r+6,y:i.yy+4},svg).textContent = i.text;
+  for (const i of items) el('text',{class:'endlbl',x:W-M.r+6,y:i.yy+4,...(i.muted?{fill:'var(--muted)','font-size':10}:{})},svg).textContent = i.text;
 }
 
 // ---- hover: one date shared by both charts
@@ -206,7 +209,8 @@ function drawPolls(){
   const svg = $('#svg-polls'); size(svg);
   const [x0,x1] = xDomain();
   const polls = D.polls.filter(p => day(p.end) >= x0 && day(p.end) <= x1);
-  const ext = polls.flatMap(p=>[p.two_way, 100-p.two_way]);
+  const y22 = D.y2022.avg.filter(r=>day(r.d)>=x0 && day(r.d)<=x1);
+  const ext = polls.flatMap(p=>[p.two_way, 100-p.two_way]).concat(y22.flatMap(r=>[r.bolsonaro, r.lula]));
   const y0 = Math.floor(Math.min(46,...ext)/2)*2, y1 = Math.ceil(Math.max(54,...ext)/2)*2;
   const ticks=[]; for(let v=y0; v<=y1; v+=(y1-y0>16?4:2)) ticks.push(v);
   const {x,y} = frame(svg, y0, y1, ticks);
@@ -215,17 +219,26 @@ function drawPolls(){
     el('circle',{cx:x(day(p.end)),cy:y(p.two_way),r:3,fill:'var(--flavio)','fill-opacity':.35},g);
     el('circle',{cx:x(day(p.end)),cy:y(100-p.two_way),r:3,fill:'var(--lula)','fill-opacity':.35},g);
   }
+  // 2022 runoff, shifted so its runoff day lands on this one
+  for (const [c,k] of [['flavio','bolsonaro'],['lula','lula']]){
+    el('path',{d:linePath(y22.map(r=>({d:r.d,v:r[k]})),x,y),fill:'none',stroke:`var(--${c})`,'stroke-width':1.5,'stroke-dasharray':'5 4','stroke-opacity':.7},svg);
+    el('circle',{cx:x(day(D.runoff)),cy:y(D.y2022.result[k]),r:4.5,fill:'var(--panel)',stroke:`var(--${c})`,'stroke-width':1.75},svg);
+  }
   const avg = (state.avg==='pp' ? D.avg_pp : D.avg_ours).filter(r=>day(r.d)>=x0);
   for (const c of ['flavio','lula'])
     el('path',{d:linePath(avg.map((r,i)=>({d:r.d,v:r[c],brk:i>0&&avg[i-1].phase!==r.phase})),x,y),fill:'none',stroke:`var(--${c})`,'stroke-width':2.25,'stroke-linejoin':'round'},svg);
   const a = last(avg);
-  endLabels(svg, [{v:a.flavio,text:`Flávio ${pct(a.flavio)}`},{v:a.lula,text:`Lula ${pct(a.lula)}`}], y);
+  const R = D.y2022.result;
+  endLabels(svg, [{v:a.flavio,text:`Flávio ${pct(a.flavio)}`},{v:a.lula,text:`Lula ${pct(a.lula)}`},
+    {v:R.bolsonaro,text:`2022 Bolso. ${pct(R.bolsonaro)}`,muted:1},{v:R.lula,text:`2022 Lula ${pct(R.lula)}`,muted:1}], y);
   $('#big-polls').innerHTML = `<span class="f">Flávio <span class="n">${pct(a.flavio)}<small>%</small></span></span><span class="l">Lula <span class="n">${pct(a.lula)}<small>%</small></span></span>`;
   attachHover('polls', svg, {x,y}, $('#tip-polls'), d=>{
     const r = (state.avg==='pp' ? D.avg_pp : D.avg_ours).find(r=>r.d===d);
     const rows = r ? [{k:'Flávio',v:pct(r.flavio),c:'var(--flavio)',dot:r.flavio},{k:'Lula',v:pct(r.lula),c:'var(--lula)',dot:r.lula}] : [];
-    const ended = D.polls.filter(p=>p.end===d);
-    return {rows, extra: ended.length ? `<div class="pl">${ended.map(p=>`${p.pollster}: Flávio ${pct(p.two_way)}`).join('<br>')}</div>` : ''};
+    const ended = D.polls.filter(p=>p.end===d), o = D.y2022.avg.find(r=>r.d===d);
+    const old = o ? `<div class="pl">2022 (${fmtD(o.d22)}): Bolsonaro ${pct(o.bolsonaro)} · Lula ${pct(o.lula)}${d===D.runoff?`<br>2022 result: Bolsonaro ${pct(D.y2022.result.bolsonaro)} · Lula ${pct(D.y2022.result.lula)}`:''}</div>` : '';
+    if (!rows.length && o) rows.push({k:'2022 Bolsonaro',v:pct(o.bolsonaro),c:'var(--flavio)',dot:o.bolsonaro},{k:'2022 Lula',v:pct(o.lula),c:'var(--lula)',dot:o.lula});
+    return {rows, extra: old + (ended.length ? `<div class="pl">${ended.map(p=>`${p.pollster}: Flávio ${pct(p.two_way)}`).join('<br>')}</div>` : '')};
   });
 }
 
