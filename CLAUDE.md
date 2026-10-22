@@ -4,7 +4,7 @@ Live: https://mmuzzi.github.io/brazil-runoff-tracker/ · Repo: github.com/mmuzzi
 Runoff is **2026-10-25**. Rebuilt and simplified on 2026-10-22. The earlier claude.ai prototype had calibration panels and house effects. They were dropped; the old CSVs are in `data/archive/`.
 
 ## Layout
-- `index.html`: single file, vanilla JS + hand-drawn SVG, no deps. It fetches `data/data.json`. There are two charts side by side, with toggles for range (runoff / since April), poll average (ours / Plano Político / both) and chance-for (Flávio / Lula).
+- `index.html`: single file, vanilla JS + hand-drawn SVG, no deps; fetches `data/data.json`. Kept deliberately minimal (owner asked 2026-10-22 to strip copy): title, range toggle, Polls chart (our avg / PP avg toggle), Chance chart (both candidates; model = thick line, Polymarket = thin, shaded range between), runoff polls table, one-line footer.
 - `scripts/update.py`: stdlib-only. It rebuilds `data/data.json` and fails loudly (exit 1, nothing written) if any source breaks.
 - `data/polls_extra.csv`: manual runoff polls that Plano Político doesn't carry (Vox Brasil, Veritá). PP deliberately removed Vox on 2026-10-18.
 - `data/model_history.json`: merged model series, so history survives if PP drops days from its chart.
